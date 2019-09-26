@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# This script scrapes specific product page from online Amazon store.
+# Goal: collect all comments about the product and put them in text file.
+
+for i in {1..30}
+	do
+		#STEP 1 (READ THE PAGE SOURCE CODE)
+		PAGE=$(curl "https://www.amazon.com/Gardens-Moon-Malazan-Book-Fallen/product-reviews/0765348780/ref=cm_cr_getr_d_paging_btm_${i}?ie=UTF8&filterByStar=five_star&pageNumber=${i}&reviewerType=avp_only_reviews")
+		echo $PAGE > step_1.txt
+		#STEP 2 (subtract ending </span> tag with new line \n)
+		sed 's/<\/span>/\n/g' < step_1.txt > step_2.txt
+		#STEP 3 (find all lines that contain <\/div><div class="a-row review-data">...)
+		grep '<\/div><div class="a-row review-data"><span data-hook="review-body" class="a-size-base review-text">' < step_2.txt > step_3.txt
+		#STEP 4 (eliminate <br/> tags)
+		sed 's/<br \/>//g' < step_3.txt > step_4.txt
+		#STEP 5 (eliminate <a> and </a> tags)
+		sed 's/<a>//g' step_4.txt | sed 's/<\/a>//g' step_4.txt > step_5.txt
+		#STEP 6 (subtract <\/div><div class="a-row review-data">... with new line \n)
+		sed 's/<\/div><div class="a-row review-data"><span data-hook="review-body" class="a-size-base review-text">/\n/g' <step_4.txt > step_5.txt
+		#FINAL STEP (store all comments to the file "hw1_result.txt")
+		cat step_5.txt >> result.txt
+		
+		rm step_1.txt
+		rm step_2.txt
+		rm step_3.txt
+		rm step_4.txt
+		rm step_5.txt
+	done
